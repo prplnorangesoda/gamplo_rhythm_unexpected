@@ -3,7 +3,6 @@
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
-    "tailwindcss": "^4.1.18",
     "@tailwindcss/cli": "^4.1.18",
     "@types/bun": "latest"
   },
@@ -15,6 +14,8 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@pixi/ui": "^2.3.2",
+    "gsap": "^3.14.2",
     "pixi.js": "^8.16.0"
   }
 }

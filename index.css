@@ -1,1 +1,5 @@
 @import "tailwindcss";
+
+.pin-width {
+    width: min(100%, calc(100dvh * (16/9)))
+}

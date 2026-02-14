@@ -1,48 +1,41 @@
 import { Application, type Renderer } from "pixi.js";
 import { AudioUrls } from "./audio";
 import { is_dev } from "./env";
-import Game from "./game";
+import GameManager from "./game";
 import { setup_sync } from "./gamplo_sync";
 import log from "./log";
 import { Colors } from "./colors";
+import { ScreenKind } from "./screens/screen";
+import { createSystems } from "./systems/system";
+import type { ScreenSwitchEvent } from "./systems/nav";
 
 // console.log("Hello via Bun!");
-setup_sync()
+setup_sync();
 
-log("Running under development:", is_dev)
-
-let hot_app: Application<Renderer>;
-let hot_game: Game;
-
-import.meta.hot.dispose(() => {
-    try {
-        hot_app.canvas.remove();
-        hot_app.destroy();
-        hot_game.destroy()
-    } catch (err) { }
-})
-
-import.meta.hot.accept();
+log("Running under development:", is_dev);
+main();
 
 async function sleep(millis: number) {
-    await new Promise((resolve, reject) => { setTimeout(resolve, millis) })
+	await new Promise((resolve, reject) => {
+		setTimeout(resolve, millis);
+	});
 }
 
 async function main() {
-    const app = new Application();
+	log("running main");
+	// debugger;
 
+	const app = new Application();
+	const systems = createSystems();
 
-    await app.init({ background: Colors.BG, resizeTo: window })
-    document.body.appendChild(app.canvas)
+	const pin = document.getElementById("pin")!;
+	await app.init({ background: Colors.BG, resizeTo: pin });
+	document.body.appendChild(app.canvas);
 
-    const game = new Game(app);
+	const game = new GameManager(app, systems);
 
-    if (import.meta.hot) {
-        hot_app = app;
-        hot_game = game;
-    }
+	game.init();
 
-    game.init();
+	game.set_screen(ScreenKind.MainMenu);
+	window.addEventListener("screenswitch", (event: ScreenSwitchEvent) => {}, {});
 }
-
-window.addEventListener("click", main, { once: true })
