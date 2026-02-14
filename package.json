@@ -1,0 +1,19 @@
+{
+  "name": "gamplo_rhythm_unexpected",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "tailwindcss": "^4.1.18",
+    "@tailwindcss/cli": "^4.1.18",
+    "@types/bun": "latest"
+  },
+  "scripts": {
+    "dev": "bun ./index.html & tailwindcss -i ./index.css -o ./dist.css --watch"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "pixi.js": "^8.16.0"
+  }
+}
