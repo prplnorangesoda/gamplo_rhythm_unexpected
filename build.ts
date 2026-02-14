@@ -5,5 +5,8 @@ await $`rm -r dist/*`
 await Bun.build({
     entrypoints: ["./index.html"],
     outdir: "./dist",
-    minify: true
+    minify: true,
+    define: {
+        ["process.env.NODE_ENV"]: '"production"',
+    }
 })
