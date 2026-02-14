@@ -8,7 +8,8 @@
     "@types/bun": "latest"
   },
   "scripts": {
-    "dev": "bun ./index.html & tailwindcss -i ./index.css -o ./dist.css --watch"
+    "dev": "bun ./index.html & tailwindcss -i ./index.css -o ./dist.css --watch",
+    "build": "bun ./build.ts"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
