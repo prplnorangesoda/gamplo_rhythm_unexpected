@@ -1,11 +1,9 @@
-import { Application, Text, type Renderer } from "pixi.js";
-import { AudioUrls } from "./audio";
+import { Application, Text } from "pixi.js";
 import { is_dev } from "./env";
 import GameManager, { SCREEN_MAP } from "./game";
 import { setup_sync } from "./gamplo_sync";
 import log from "./log";
 import { Colors } from "./colors";
-import { ScreenKind } from "./screens/screen";
 import { createSystems } from "./systems/system";
 import type { ScreenSwitchEvent } from "./systems/nav";
 import { sound } from "@pixi/sound";

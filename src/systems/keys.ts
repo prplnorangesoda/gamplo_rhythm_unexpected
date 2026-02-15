@@ -1,5 +1,5 @@
 import { Signal } from "typed-signals";
-import log from "../log";
+// import log from "../log";
 
 export enum Keybind {
 	D,
@@ -41,10 +41,10 @@ export default class KeySystem {
 		window.removeEventListener("keydown", this.onkeydownl);
 		window.removeEventListener("keyup", this.onkeyupl);
 	}
-	private onclick(event: PointerEvent) {
-		event.preventDefault();
-		console.log(event);
-	}
+	// private onclick(event: PointerEvent) {
+	// 	event.preventDefault();
+	// 	console.log(event);
+	// }
 	private onKeyDown(event: KeyboardEvent) {
 		event.preventDefault();
 		this.keys.set(event.code, true);

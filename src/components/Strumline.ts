@@ -1,21 +1,25 @@
 import {
 	Container,
 	Graphics,
+	Text,
 	Ticker,
 	type ContainerOptions,
 	type GraphicsOptions,
 } from "pixi.js";
 import log from "../log";
 import type { Sound } from "@pixi/sound";
-import type { ChartData, Note } from "../chart";
+import type { ChartData, JsonNote } from "../chart";
 import { Signal } from "typed-signals";
 import {
 	CENTRE_LANE_SIDE_OFFSET,
 	HIT_WINDOW,
 	LANE_PADDING,
 	LANE_SIZE,
+	SCROLL_SPEED,
 } from "../data/constants";
 import type { Keybind } from "../systems/keys";
+import { sleep } from "../sleep";
+import gsap from "gsap";
 
 export interface StrumlineOptions {
 	options?: ContainerOptions;
@@ -30,7 +34,7 @@ export class RenderedNote extends Graphics {
 	) {
 		super(options);
 
-		this.roundRect(-LANE_SIZE, -10, LANE_SIZE, 20, 4).fill("pink");
+		this.roundRect(0, -10, LANE_SIZE, 20, 4).fill("pink");
 	}
 }
 
@@ -57,16 +61,15 @@ export class Strumline extends Container {
 	private started_ms: DOMHighResTimeStamp = performance.now();
 	private started_song_ms: DOMHighResTimeStamp = performance.now();
 	private notes: Container = new Container({ zIndex: 30 });
-	private remainingNotes: Note[] = [];
+	private remainingNotes: JsonNote[] = [];
+
+	private hintContainer: Container = new Container({ zIndex: 50, alpha: 0 });
 
 	private health: number = 80;
 
 	private inputDownQueue: Keybind[] = [];
 
-	constructor(
-		private ticker: Ticker,
-		options?: StrumlineOptions,
-	) {
+	constructor(options?: StrumlineOptions) {
 		super(options?.options);
 		this.Ended = new Signal();
 		this.Ended.connect(() => {
@@ -105,6 +108,33 @@ export class Strumline extends Container {
 			.fill("white");
 		this.addChild(this.line);
 		this.addChild(this.notes);
+
+		let d = new Text({
+			text: "D",
+			style: { fontFamily: "roboto", fill: "white", align: "center" },
+		});
+
+		d.x = -110;
+
+		let f = new Text({
+			text: "F",
+			style: { fontFamily: "roboto", fill: "white", align: "center" },
+		});
+
+		f.x = -37;
+		let j = new Text({
+			text: "J",
+			style: { fontFamily: "roboto", fill: "white", align: "center" },
+		});
+
+		j.x = 89;
+		let k = new Text({
+			text: "K",
+			style: { fontFamily: "roboto", fill: "white", align: "center" },
+		});
+		k.x = 160;
+		this.hintContainer.addChild(d, f, j, k);
+		this.hintContainer.y = -90;
 	}
 	ready(color: string, sound: Sound, chart: ChartData, bpm: number) {
 		this.bg_center.clear().rect(12, -5000, 46, 5000).fill(color);
@@ -114,6 +144,7 @@ export class Strumline extends Container {
 	}
 
 	async play() {
+		this.addChild(this.hintContainer);
 		log("will start playing");
 		if (!this.chart) {
 			throw new Error("No chart");
@@ -125,6 +156,10 @@ export class Strumline extends Container {
 		let notes = this.chart.notes.toSorted((a, b) => a.b - b.b);
 		this.state = StrumlineState.RequestStart;
 		this.remainingNotes = notes;
+		await gsap.to(this.hintContainer, { alpha: 1, duration: 0.5 });
+		await sleep(3000);
+		await gsap.to(this.hintContainer, { alpha: 0, duration: 0.5 });
+		this.removeChild(this.hintContainer);
 	}
 	updateNotes() {
 		let beats_from_start: number;
@@ -157,7 +192,7 @@ export class Strumline extends Container {
 					note.beat < beats_from_start &&
 					(beats_from_start - note.beat) * this.ms_per_beat() >= HIT_WINDOW
 				) {
-					// this.notes.removeChild(note);
+					this.notes.removeChild(note);
 					this.missNote(note);
 				}
 			}
@@ -170,7 +205,26 @@ export class Strumline extends Container {
 			// log("remainingNote note:", note);
 			// log(note.b - beats_from_start);
 			if (beats_from_start - note.b < 32) {
-				this.notes.addChild(new RenderedNote(note.b, note.l));
+				let new_note = new RenderedNote(note.b, note.l);
+				let x: number;
+				switch (note.l) {
+					case 0:
+						x = -(CENTRE_LANE_SIDE_OFFSET + LANE_SIZE + LANE_PADDING * 2);
+						break;
+					case 1:
+						x = -(CENTRE_LANE_SIDE_OFFSET + LANE_PADDING);
+						break;
+					case 2:
+						x = CENTRE_LANE_SIDE_OFFSET + LANE_PADDING;
+						break;
+					case 3:
+						x = CENTRE_LANE_SIDE_OFFSET + LANE_SIZE + LANE_PADDING * 2;
+						break;
+					default:
+						throw new Error("Lane is not valid");
+				}
+				new_note.x = x;
+				this.notes.addChild(new_note);
 				this.remainingNotes.shift();
 			} else {
 				break;
@@ -182,27 +236,22 @@ export class Strumline extends Container {
 		// log("Note missed");
 	}
 	renderNotes() {
+		let beats_from_start: number;
+		if (this.state == StrumlineState.PreNotes) {
+			beats_from_start = this.get_beats_from_start(
+				this.started_ms + this.eight_beats_time(),
+				performance.now(),
+			);
+		} else {
+			beats_from_start = this.get_beats_from_start(
+				this.started_song_ms,
+				performance.now(),
+			);
+		}
 		for (let note of this.notes.children as RenderedNote[]) {
 			if (note === undefined) continue;
-			let x: number;
-			switch (note.lane) {
-				case 0:
-					x = -(CENTRE_LANE_SIDE_OFFSET + LANE_SIZE + LANE_PADDING * 2);
-					break;
-				case 1:
-					x = -(CENTRE_LANE_SIDE_OFFSET + LANE_PADDING);
-					break;
-				case 2:
-					x = CENTRE_LANE_SIDE_OFFSET + LANE_PADDING;
-					break;
-				case 3:
-					x = CENTRE_LANE_SIDE_OFFSET + LANE_SIZE + LANE_PADDING * 2;
-					break;
-				default:
-					throw new Error("Lane is not valid");
-			}
-			note.x = x;
-			note.y = -Date.now() % 1000;
+
+			note.y = -100 - (note.beat - beats_from_start) * (200 * SCROLL_SPEED);
 			// log(note);
 		}
 	}

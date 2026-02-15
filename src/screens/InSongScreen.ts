@@ -1,12 +1,10 @@
-import { Container, FederatedPointerEvent, Text, Ticker } from "pixi.js";
+import { Container, Text, Ticker } from "pixi.js";
 import { ScreenKind, type AppScreen } from "./screen";
 import gsap from "gsap";
 import type { Systems } from "../systems/system";
-import type { Button } from "@pixi/ui";
 import { type SongData } from "../data/songs";
 import log from "../log";
 import { Colors } from "../colors";
-import { sleep } from "../sleep";
 import { Strumline } from "../components/Strumline";
 import { Sound } from "@pixi/sound";
 import { get_chart_from_url } from "../chart";
@@ -57,7 +55,7 @@ export class InSongScreen
 		// Construct details only shown in song
 		this.inSongContainer = new Container({ alpha: 0 });
 
-		this.strumline = new Strumline(systems.ticker);
+		this.strumline = new Strumline();
 		this.inSongContainer.addChild(this.strumline);
 		this.song_title_text = new Text({
 			text: "TITLE",
@@ -101,7 +99,7 @@ export class InSongScreen
 
 		let promises = await Promise.all([
 			(async () => {
-				let sound: Sound = await new Promise((res, rej) => {
+				let sound: Sound = await new Promise((res, _) => {
 					let sound = Sound.from({
 						url: data.song.audio,
 						autoPlay: false,
@@ -132,13 +130,14 @@ export class InSongScreen
 		// log("this.playing = true");
 		this.playing = true;
 		this.strumline.play();
-		await new Promise<void>((res, rej) => {
+		await new Promise<void>((res, _) => {
 			let connection = this.strumline.Ended.connect(() => {
 				log("Song ended");
 				connection.disconnect();
 				res();
 			});
 		});
+		this.systems.nav.requestScreenSwitch(ScreenKind.MainMenu);
 	}
 
 	onUpdate(time: Ticker) {

@@ -14,7 +14,7 @@ export class ScreenSwitchEvent extends Event {
 export class NavSystem {
 	constructor() {}
 
-	requestScreenSwitch(to_screen: ScreenKind, data: any) {
+	requestScreenSwitch(to_screen: ScreenKind, data?: any) {
 		let screenChangeRequest = new ScreenSwitchEvent(
 			"screenswitch",
 			to_screen,
