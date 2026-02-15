@@ -6,7 +6,7 @@ export default class Title extends Container {
 	constructor() {
 		super();
 		this.titleText = new Text({
-			text: "Title",
+			text: "skipper",
 			style: { fontFamily: "Roboto", fontSize: "80", fill: Colors.TEXT },
 		});
 		this.titleText.anchor = 0.5;

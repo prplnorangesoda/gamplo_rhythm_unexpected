@@ -7,6 +7,8 @@ import type { Systems } from "../systems/system";
 import type { Button } from "@pixi/ui";
 import log from "../log";
 import { SONGS } from "../data/songs";
+import { Keybind } from "../systems/keys";
+import type { SignalConnection } from "typed-signals";
 
 export class MainMenuScreen extends Container implements AppScreen {
 	public static NAME = "mainmenu";
@@ -22,6 +24,7 @@ export class MainMenuScreen extends Container implements AppScreen {
 	private buttons!: Container;
 	private play_button!: MenuButton;
 
+	private bind_pressed_listener?: SignalConnection;
 	constructor(private systems: Systems) {
 		super();
 
@@ -31,10 +34,10 @@ export class MainMenuScreen extends Container implements AppScreen {
 		this.makeButtons();
 	}
 
-	onPlayButtonClicked(button?: Button, event?: FederatedPointerEvent) {
+	onPlayButtonClicked(_button?: Button, _event?: FederatedPointerEvent) {
 		log("Pressed");
 		this.systems.nav.requestScreenSwitch(ScreenKind.InSong, {
-			song: SONGS["crafter2011"],
+			song: SONGS["thisll_probably_be_quaver"],
 		});
 	}
 
@@ -49,7 +52,6 @@ export class MainMenuScreen extends Container implements AppScreen {
 		this.play_button.onPress.connect(this.onPlayButtonClicked.bind(this));
 		this.addChild(this.buttons);
 	}
-
 	async onShow() {
 		this.title.y = -1000;
 		this.title_anim = gsap.to(this.title, {
@@ -58,10 +60,13 @@ export class MainMenuScreen extends Container implements AppScreen {
 			ease: "sine.Out",
 		});
 
+		this.bind_pressed_listener = this.systems.keys.bindDown.connect((bind) => {
+			if (bind == Keybind.Enter) {
+				this.onPlayButtonClicked();
+			}
+		});
 		await this.title_anim;
 		delete this.title_anim;
-
-		let promises = [gsap.to];
 	}
 
 	onResize(w: number, h: number) {
@@ -79,5 +84,13 @@ export class MainMenuScreen extends Container implements AppScreen {
 		this.play_button.y = h - 10;
 	}
 
-	async onHide() {}
+	async onHide() {
+		if (this.title_anim) {
+			this.title_anim.kill();
+		}
+		if (this.bind_pressed_listener) {
+			this.bind_pressed_listener.disconnect();
+		}
+		this.systems.keys.bindDown;
+	}
 }

@@ -1,14 +1,23 @@
 import { Container, FederatedPointerEvent, Text } from "pixi.js";
 import { ScreenKind, type AppScreen } from "./screen";
-import Title from "../components/Title";
 import gsap from "gsap";
-import { MenuButton } from "../components/MenuButton";
 import type { Systems } from "../systems/system";
 import type { Button } from "@pixi/ui";
+import { type SongData } from "../data/songs";
 import log from "../log";
-import { SONGS } from "../data/songs";
+import { Colors } from "../colors";
+import { sleep } from "../sleep";
+import { Strumline } from "../components/Strumline";
+import { Sound } from "@pixi/sound";
+import { parse_chart_from_url } from "../chart";
 
-export class InSongScreen extends Container implements AppScreen {
+export interface InSongScreenData {
+	song: SongData;
+}
+export class InSongScreen
+	extends Container
+	implements AppScreen<InSongScreenData>
+{
 	public static NAME = "insong";
 	public static LAYER = "main";
 
@@ -16,68 +25,127 @@ export class InSongScreen extends Container implements AppScreen {
 		w: 0,
 		h: 0,
 	};
-	private title: Title;
-	private title_anim?: gsap.core.Tween;
 
-	private buttons!: Container;
-	private play_button!: MenuButton;
+	private song_title_text: Text;
+	private song_author_text: Text;
 
+	private loading_text: Text;
+	private inSongContainer: Container;
+	private loadingSongContainer: Container;
+
+	private strumline: Strumline;
+
+	// private sound?: Sound;
 	constructor(private systems: Systems) {
 		super();
 
-		this.title = new Title();
-		this.addChild(this.title);
+		this.loadingSongContainer = new Container();
 
-		this.makeButtons();
-	}
-
-	onPlayButtonClicked(button?: Button, event?: FederatedPointerEvent) {
-		log("Pressed");
-		this.systems.nav.requestScreenSwitch(ScreenKind.InSong, {
-			song: SONGS["crafter2011"],
+		this.loading_text = new Text({
+			text: "LOADING",
+			style: {
+				fill: Colors.TEXT,
+				fontSize: 60,
+				fontFamily: "Roboto",
+				align: "center",
+			},
+			anchor: 0.5,
 		});
-	}
+		this.loadingSongContainer.addChild(this.loading_text);
+		// Construct details only shown in song
+		this.inSongContainer = new Container({ alpha: 0 });
 
-	makeButtons() {
-		this.buttons = new Container();
-		this.play_button = new MenuButton({
-			text: "Play",
-			w: 600,
-			h: 100,
+		this.strumline = new Strumline();
+		this.inSongContainer.addChild(this.strumline);
+		this.song_title_text = new Text({
+			text: "TITLE",
+			style: {
+				stroke: {
+					color: "purple",
+					width: 4,
+				},
+				fill: Colors.TEXT,
+				fontSize: 24,
+				fontFamily: "Roboto",
+				align: "left",
+			},
 		});
-		this.buttons.addChild(this.play_button);
-		this.play_button.onPress.connect(this.onPlayButtonClicked.bind(this));
-		this.addChild(this.buttons);
-	}
+		this.song_title_text.anchor = { x: 0, y: 1 };
+		this.inSongContainer.addChild(this.song_title_text);
+		this.song_author_text = new Text({
+			text: "AUTHOR",
 
-	async onShow() {
-		this.title.y = -1000;
-		this.title_anim = gsap.to(this.title, {
-			y: this.size.h * 0.1,
-			duration: 2,
-			ease: "sine.Out",
+			style: {
+				stroke: {
+					color: "black",
+					width: 4,
+				},
+				fill: Colors.TEXT,
+				fontSize: 24,
+				fontFamily: "Roboto",
+				align: "left",
+			},
 		});
-
-		await this.title_anim;
-		delete this.title_anim;
-
-		let promises = [gsap.to];
+		this.song_title_text.anchor = { x: 0, y: 1 };
+		this.inSongContainer.addChild(this.song_author_text);
 	}
 
+	async onShow(data: InSongScreenData) {
+		this.addChild(this.loadingSongContainer);
+		log("showing with data:", data);
+		this.song_title_text.text = data.song.name;
+		this.song_author_text.text = data.song.artist;
+		this.song_title_text.style.stroke = data.song.color;
+
+		let promises = await Promise.all([
+			new Promise((res, rej) => {
+				let sound = Sound.from({
+					url: data.song.audio,
+					autoPlay: false,
+					preload: true,
+					loaded: () => {
+						log("sound loaded:", data.song.audio);
+						res(sound);
+					},
+				});
+			}),
+			parse_chart_from_url(data.song.charts.easy!),
+		]);
+
+		let sound = promises[0] as Sound;
+		this.addChild(this.inSongContainer);
+		this.strumline.ready(data.song.color);
+		// Load
+		// await sleep(1000);
+		await Promise.all([
+			gsap.to(this.inSongContainer, { alpha: 1, duration: 1.0 }),
+			gsap.to(this.loadingSongContainer, { alpha: 0, duration: 1.0 }),
+		]);
+		this.removeChild(this.loadingSongContainer);
+
+		await sleep(1000);
+		sound.play();
+	}
 	onResize(w: number, h: number) {
 		this.size.w = w;
 		this.size.h = h;
 
-		this.title.x = w / 2;
-		if (this.title_anim) {
-			this.title_anim.resetTo("y", this.size.h * 0.1);
-		} else {
-			this.title.y = h * 0.1;
-		}
+		this.loading_text.x = w / 2;
+		this.loading_text.y = h / 2;
 
-		this.play_button.x = w / 2;
-		this.play_button.y = h - 10;
+		this.song_title_text.y = h;
+		this.song_title_text.x = 8;
+		this.song_title_text.zIndex = 50;
+
+		this.song_author_text.y = h - 60;
+		this.song_author_text.x = 8;
+		this.song_author_text.zIndex = 49;
+
+		this.strumline.x = w / 2;
+		this.strumline.y = h;
 	}
 
-	async onHide() {}
+	async onHide() {
+		this.removeChild(this.inSongContainer);
+	}
 }

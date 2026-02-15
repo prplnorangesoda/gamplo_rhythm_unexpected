@@ -14,8 +14,10 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@pixi/sound": "^6.0.1",
     "@pixi/ui": "^2.3.2",
     "gsap": "^3.14.2",
-    "pixi.js": "^8.16.0"
+    "pixi.js": "^8.16.0",
+    "typed-signals": "^3.0.0"
   }
 }

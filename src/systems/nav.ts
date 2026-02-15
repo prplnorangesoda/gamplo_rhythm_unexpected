@@ -17,8 +17,8 @@ export class NavSystem {
 	requestScreenSwitch(to_screen: ScreenKind, data: any) {
 		let screenChangeRequest = new ScreenSwitchEvent(
 			"screenswitch",
-			data,
 			to_screen,
+			data,
 		);
 		window.dispatchEvent(screenChangeRequest);
 	}

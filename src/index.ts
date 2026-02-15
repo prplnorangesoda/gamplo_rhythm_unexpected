@@ -15,12 +15,6 @@ setup_sync();
 log("Running under development:", is_dev);
 main();
 
-async function sleep(millis: number) {
-	await new Promise((resolve, reject) => {
-		setTimeout(resolve, millis);
-	});
-}
-
 async function main() {
 	log("running main");
 	// debugger;
@@ -37,8 +31,8 @@ async function main() {
 	app.renderer.hello;
 	game.init();
 
-	log(SCREEN_MAP);
-	game.set_screen(ScreenKind.MainMenu);
+	// log(SCREEN_MAP);
+	// game.set_screen(ScreenKind.MainMenu);
 	window.addEventListener(
 		"screenswitch",
 		(_event) => {
@@ -46,7 +40,7 @@ async function main() {
 			if (is_dev) {
 				log("Swapping to screen ", SCREEN_MAP[event.screen_type]);
 			}
-			game.set_screen(event.screen_type);
+			game.set_screen(event.screen_type, event.data);
 		},
 		{},
 	);
