@@ -12,7 +12,7 @@ export enum Keybind {
 }
 export default class KeySystem {
 	keys: Map<string, boolean>;
-	private onclickl = this.onclick.bind(this);
+	// private onclickl = this.onclick.bind(this);
 	private onkeydownl = this.onKeyDown.bind(this);
 	private onkeyupl = this.onKeyUp.bind(this);
 
@@ -32,12 +32,12 @@ export default class KeySystem {
 	constructor() {
 		this.keys = new Map();
 		this.bindDown = new Signal();
-		window.addEventListener("click", this.onclickl);
+		// window.addEventListener("click", this.onclickl);
 		window.addEventListener("keydown", this.onkeydownl);
 		window.addEventListener("keyup", this.onkeyupl);
 	}
 	destroy() {
-		window.removeEventListener("click", this.onclickl);
+		// window.removeEventListener("click", this.onclickl);
 		window.removeEventListener("keydown", this.onkeydownl);
 		window.removeEventListener("keyup", this.onkeyupl);
 	}

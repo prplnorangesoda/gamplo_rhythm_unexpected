@@ -1,4 +1,4 @@
-import { Container, FederatedPointerEvent, Text } from "pixi.js";
+import { Container, FederatedPointerEvent, Text, Ticker } from "pixi.js";
 import { ScreenKind, type AppScreen } from "./screen";
 import gsap from "gsap";
 import type { Systems } from "../systems/system";
@@ -9,7 +9,7 @@ import { Colors } from "../colors";
 import { sleep } from "../sleep";
 import { Strumline } from "../components/Strumline";
 import { Sound } from "@pixi/sound";
-import { parse_chart_from_url } from "../chart";
+import { get_chart_from_url } from "../chart";
 
 export interface InSongScreenData {
 	song: SongData;
@@ -34,11 +34,13 @@ export class InSongScreen
 	private loadingSongContainer: Container;
 
 	private strumline: Strumline;
+	private playing: boolean;
 
 	// private sound?: Sound;
 	constructor(private systems: Systems) {
 		super();
 
+		this.playing = false;
 		this.loadingSongContainer = new Container();
 
 		this.loading_text = new Text({
@@ -55,7 +57,7 @@ export class InSongScreen
 		// Construct details only shown in song
 		this.inSongContainer = new Container({ alpha: 0 });
 
-		this.strumline = new Strumline();
+		this.strumline = new Strumline(systems.ticker);
 		this.inSongContainer.addChild(this.strumline);
 		this.song_title_text = new Text({
 			text: "TITLE",
@@ -98,23 +100,28 @@ export class InSongScreen
 		this.song_title_text.style.stroke = data.song.color;
 
 		let promises = await Promise.all([
-			new Promise((res, rej) => {
-				let sound = Sound.from({
-					url: data.song.audio,
-					autoPlay: false,
-					preload: true,
-					loaded: () => {
-						log("sound loaded:", data.song.audio);
-						res(sound);
-					},
+			(async () => {
+				let sound: Sound = await new Promise((res, rej) => {
+					let sound = Sound.from({
+						url: data.song.audio,
+						autoPlay: false,
+						preload: true,
+
+						loaded: () => {
+							log("sound loaded:", data.song.audio);
+							res(sound);
+						},
+					});
 				});
-			}),
-			parse_chart_from_url(data.song.charts.easy!),
+				return sound;
+			})(),
+			get_chart_from_url(data.song.charts.easy!),
 		]);
 
-		let sound = promises[0] as Sound;
+		let sound = promises[0];
+		let chart = promises[1];
 		this.addChild(this.inSongContainer);
-		this.strumline.ready(data.song.color);
+		this.strumline.ready(data.song.color, sound, chart, data.song.bpm);
 		// Load
 		// await sleep(1000);
 		await Promise.all([
@@ -122,10 +129,25 @@ export class InSongScreen
 			gsap.to(this.loadingSongContainer, { alpha: 0, duration: 1.0 }),
 		]);
 		this.removeChild(this.loadingSongContainer);
-
-		await sleep(1000);
-		sound.play();
+		// log("this.playing = true");
+		this.playing = true;
+		this.strumline.play();
+		await new Promise<void>((res, rej) => {
+			let connection = this.strumline.Ended.connect(() => {
+				log("Song ended");
+				connection.disconnect();
+				res();
+			});
+		});
 	}
+
+	onUpdate(time: Ticker) {
+		// log("this.playing", this.playing);
+		if (this.playing) {
+			this.strumline.update(time);
+		}
+	}
+
 	onResize(w: number, h: number) {
 		this.size.w = w;
 		this.size.h = h;
@@ -147,5 +169,6 @@ export class InSongScreen
 
 	async onHide() {
 		this.removeChild(this.inSongContainer);
+		this.playing = false;
 	}
 }

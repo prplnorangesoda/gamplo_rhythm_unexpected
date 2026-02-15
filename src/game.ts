@@ -46,7 +46,9 @@ export default class GameManager {
 			log("Current screen:", SCREEN_MAP[screen_kind].name);
 			await this.current_screen.onHide();
 			if (this.current_screen.onUpdate) {
-				this.app.ticker.remove(this.current_screen.onUpdate);
+				this.app.ticker.remove(
+					this.current_screen.onUpdate.bind(this.current_screen),
+				);
 			}
 			if (this.current_screen.parent) {
 				this.current_screen.parent.removeChild(this.current_screen);
@@ -63,7 +65,7 @@ export default class GameManager {
 			screen_to_set.onResize(this.app.canvas.width, this.app.canvas.height);
 		}
 		if (screen_to_set.onUpdate) {
-			this.app.ticker.add(screen_to_set.onUpdate);
+			this.app.ticker.add(screen_to_set.onUpdate.bind(screen_to_set));
 		}
 
 		this.current_screen = screen_to_set;

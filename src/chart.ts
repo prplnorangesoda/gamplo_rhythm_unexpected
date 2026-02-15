@@ -11,9 +11,7 @@ export interface ChartData {
 	notes: Note[];
 }
 
-export async function parse_chart(chart: ChartData) {
-	log("Parsing chart:", chart);
-}
-export async function parse_chart_from_url(url: string) {
-	return parse_chart(await (await fetch(url)).json());
+export async function get_chart_from_url(url: string): Promise<ChartData> {
+	log("Loading chart from url", url);
+	return await (await fetch(url)).json();
 }

@@ -1,4 +1,4 @@
-import { Application, type Renderer } from "pixi.js";
+import { Application, Text, type Renderer } from "pixi.js";
 import { AudioUrls } from "./audio";
 import { is_dev } from "./env";
 import GameManager, { SCREEN_MAP } from "./game";
@@ -8,6 +8,7 @@ import { Colors } from "./colors";
 import { ScreenKind } from "./screens/screen";
 import { createSystems } from "./systems/system";
 import type { ScreenSwitchEvent } from "./systems/nav";
+import { sound } from "@pixi/sound";
 
 // console.log("Hello via Bun!");
 setup_sync();
@@ -20,7 +21,7 @@ async function main() {
 	// debugger;
 
 	const app = new Application();
-	const systems = createSystems();
+	const systems = createSystems(app.ticker);
 
 	const pin = document.getElementById("pin")!;
 	await app.init({ background: Colors.BG, resizeTo: pin });
@@ -28,9 +29,14 @@ async function main() {
 
 	const game = new GameManager(app, systems);
 
-	app.renderer.hello;
+	let fps = new Text({ text: "FPS", style: { fill: "lime", fontSize: 12 } });
+	app.stage.addChild(fps);
+	app.ticker.add(
+		(ticker) => (fps.text = "FPS: " + Math.round(ticker.FPS * 100) / 100),
+	);
 	game.init();
 
+	sound.disableAutoPause = true;
 	// log(SCREEN_MAP);
 	// game.set_screen(ScreenKind.MainMenu);
 	window.addEventListener(
