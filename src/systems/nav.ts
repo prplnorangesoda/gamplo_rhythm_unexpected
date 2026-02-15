@@ -3,7 +3,8 @@ import type { ScreenKind } from "../screens/screen";
 export class ScreenSwitchEvent extends Event {
 	constructor(
 		type: string,
-		screen_type: ScreenKind,
+		public screen_type: ScreenKind,
+		public data: any,
 		eventInitDict?: EventInit,
 	) {
 		super(type, eventInitDict);
@@ -13,8 +14,12 @@ export class ScreenSwitchEvent extends Event {
 export class NavSystem {
 	constructor() {}
 
-	requestScreenSwitch(to_screen: ScreenKind) {
-		let screenChangeRequest = new ScreenSwitchEvent("pageswitch", to_screen);
+	requestScreenSwitch(to_screen: ScreenKind, data: any) {
+		let screenChangeRequest = new ScreenSwitchEvent(
+			"screenswitch",
+			data,
+			to_screen,
+		);
 		window.dispatchEvent(screenChangeRequest);
 	}
 }

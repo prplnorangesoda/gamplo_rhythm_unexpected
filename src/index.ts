@@ -1,7 +1,7 @@
 import { Application, type Renderer } from "pixi.js";
 import { AudioUrls } from "./audio";
 import { is_dev } from "./env";
-import GameManager from "./game";
+import GameManager, { SCREEN_MAP } from "./game";
 import { setup_sync } from "./gamplo_sync";
 import log from "./log";
 import { Colors } from "./colors";
@@ -34,8 +34,20 @@ async function main() {
 
 	const game = new GameManager(app, systems);
 
+	app.renderer.hello;
 	game.init();
 
+	log(SCREEN_MAP);
 	game.set_screen(ScreenKind.MainMenu);
-	window.addEventListener("screenswitch", (event: ScreenSwitchEvent) => {}, {});
+	window.addEventListener(
+		"screenswitch",
+		(_event) => {
+			let event = _event as ScreenSwitchEvent;
+			if (is_dev) {
+				log("Swapping to screen ", SCREEN_MAP[event.screen_type]);
+			}
+			game.set_screen(event.screen_type);
+		},
+		{},
+	);
 }

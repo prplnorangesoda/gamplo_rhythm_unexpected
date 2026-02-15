@@ -1,14 +1,15 @@
 import { AudioUrls } from "./audio";
 import Keys from "./keys";
-import { Songs } from "./data/songs";
+import { SONGS } from "./data/songs";
 import { Container, type Application, type Renderer } from "pixi.js";
 import { MainMenuScreen } from "./screens/MainMenuScreen";
 import { ScreenKind as ScreenKind, type AppScreen } from "./screens/screen";
 import type { Systems } from "./systems/system";
+import { InSongScreen } from "./screens/InSongScreen";
 
 export const SCREEN_MAP = {
 	[ScreenKind.MainMenu]: MainMenuScreen,
-	[ScreenKind.InSong]: MainMenuScreen,
+	[ScreenKind.InSong]: InSongScreen,
 };
 export default class GameManager {
 	keys: Keys;

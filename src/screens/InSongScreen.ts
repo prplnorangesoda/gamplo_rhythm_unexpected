@@ -8,8 +8,8 @@ import type { Button } from "@pixi/ui";
 import log from "../log";
 import { SONGS } from "../data/songs";
 
-export class MainMenuScreen extends Container implements AppScreen {
-	public static NAME = "mainmenu";
+export class InSongScreen extends Container implements AppScreen {
+	public static NAME = "insong";
 	public static LAYER = "main";
 
 	private size = {
