@@ -20,6 +20,7 @@ import {
 import type { Keybind } from "../systems/keys";
 import { sleep } from "../sleep";
 import gsap from "gsap";
+import type { TimerInfo } from "../systems/ticker";
 
 export interface StrumlineOptions {
 	options?: ContainerOptions;
@@ -275,7 +276,7 @@ export class Strumline extends Container {
 	eight_beats_time() {
 		return ((60 * 1000) / this.bpm) * 8;
 	}
-	update(time: Ticker) {
+	update(time: TimerInfo) {
 		// log("Strumline update");
 		if (this.state == StrumlineState.RequestStart) {
 			this.started_ms = performance.now();

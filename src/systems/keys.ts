@@ -46,10 +46,10 @@ export default class KeySystem {
 	// 	console.log(event);
 	// }
 	private onKeyDown(event: KeyboardEvent) {
-		event.preventDefault();
 		this.keys.set(event.code, true);
 		let bind = KeySystem.binds[event.code];
 		if (bind !== undefined) {
+			event.preventDefault();
 			// log("Event code in KeySystem.binds");
 			this.bindDown.emit(bind);
 		}

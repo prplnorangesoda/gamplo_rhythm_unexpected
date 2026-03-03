@@ -46,7 +46,7 @@ export default class GameManager {
 			log("Current screen:", SCREEN_MAP[screen_kind].name);
 			await this.current_screen.onHide();
 			if (this.current_screen.onUpdate) {
-				this.app.ticker.remove(
+				this.systems.ticker.remove(
 					this.current_screen.onUpdate.bind(this.current_screen),
 				);
 			}
@@ -65,7 +65,7 @@ export default class GameManager {
 			screen_to_set.onResize(this.app.canvas.width, this.app.canvas.height);
 		}
 		if (screen_to_set.onUpdate) {
-			this.app.ticker.add(screen_to_set.onUpdate.bind(screen_to_set));
+			this.systems.ticker.add(screen_to_set.onUpdate.bind(screen_to_set));
 		}
 
 		this.current_screen = screen_to_set;
@@ -74,10 +74,12 @@ export default class GameManager {
 		await screen_to_set.onShow(data);
 	}
 	init() {
+		this.systems.ticker.start();
 		// this.music.src = AudioUrls.MUS_MENU_BEGIN;
 		// this.music.play();
 	}
 	destroy() {
+		this.systems.ticker.stop();
 		// this.music.pause()
 		// this.keys.destroy()
 	}

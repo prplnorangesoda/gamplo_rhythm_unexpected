@@ -1,4 +1,4 @@
-import { Application, Text } from "pixi.js";
+import { Application, Text, TickerPlugin, extensions } from "pixi.js";
 import { is_dev } from "./env";
 import GameManager, { SCREEN_MAP } from "./game";
 import { setup_sync } from "./gamplo_sync";
@@ -7,6 +7,8 @@ import { Colors } from "./colors";
 import { createSystems } from "./systems/system";
 import type { ScreenSwitchEvent } from "./systems/nav";
 import { sound } from "@pixi/sound";
+import { sleep } from "./sleep";
+import { sys } from "typescript";
 
 // console.log("Hello via Bun!");
 setup_sync();
@@ -14,29 +16,33 @@ setup_sync();
 log("Running under development:", is_dev);
 main();
 
+let fps: Text | undefined;
 async function main() {
 	log("running main");
-	// debugger;
 
 	const app = new Application();
-	const systems = createSystems(app.ticker);
+	const systems = createSystems(app);
 
+	Object.defineProperty(window, "systems", { value: systems });
 	const pin = document.getElementById("pin")!;
-	await app.init({ background: Colors.BG, resizeTo: pin });
+	await app.init({
+		background: Colors.BG,
+		resizeTo: pin,
+		hello: true,
+		autoStart: false, // disable default ticker
+	});
 	document.body.appendChild(app.canvas);
 
 	const game = new GameManager(app, systems);
 
-	let fps = new Text({ text: "FPS", style: { fill: "lime", fontSize: 12 } });
-	app.stage.addChild(fps);
-	app.ticker.add(
-		(ticker) => (fps.text = "FPS: " + Math.round(ticker.FPS * 100) / 100),
-	);
+	let fps_text = new Text({
+		text: "FPS",
+		style: { fill: "lime", fontSize: 12 },
+	});
+	app.stage.addChild(fps_text);
+	fps = fps_text;
 	game.init();
-
 	sound.disableAutoPause = true;
-	// log(SCREEN_MAP);
-	// game.set_screen(ScreenKind.MainMenu);
 	window.addEventListener(
 		"screenswitch",
 		(_event) => {

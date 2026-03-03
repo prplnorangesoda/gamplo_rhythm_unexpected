@@ -1,17 +1,19 @@
-import type { Ticker } from "pixi.js";
 import KeySystem from "./keys";
 import { NavSystem } from "./nav";
+import TickerSystem from "./ticker";
+import { is_dev } from "../env";
+import type { Application } from "pixi.js";
 
 export type Systems = {
 	nav: NavSystem;
 	keys: KeySystem;
-	ticker: Ticker;
+	ticker: TickerSystem;
 };
 
-export function createSystems(ticker: Ticker): Systems {
+export function createSystems(app: Application): Systems {
 	return {
 		nav: new NavSystem(),
 		keys: new KeySystem(),
-		ticker,
+		ticker: new TickerSystem(app, !is_dev),
 	};
 }

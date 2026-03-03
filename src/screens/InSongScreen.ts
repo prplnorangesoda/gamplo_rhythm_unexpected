@@ -8,6 +8,7 @@ import { Colors } from "../colors";
 import { Strumline } from "../components/Strumline";
 import { Sound } from "@pixi/sound";
 import { get_chart_from_url } from "../chart";
+import type { TimerInfo } from "../systems/ticker";
 
 export interface InSongScreenData {
 	song: SongData;
@@ -140,7 +141,7 @@ export class InSongScreen
 		this.systems.nav.requestScreenSwitch(ScreenKind.MainMenu);
 	}
 
-	onUpdate(time: Ticker) {
+	onUpdate(time: TimerInfo) {
 		// log("this.playing", this.playing);
 		if (this.playing) {
 			this.strumline.update(time);
