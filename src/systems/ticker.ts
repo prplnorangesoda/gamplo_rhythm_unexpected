@@ -2,7 +2,7 @@ import type { Application } from "pixi.js";
 import log from "../log";
 import gsap from "gsap";
 import { MIN_MS_PER_FRAME } from "../data/constants";
-import { Signal } from "typed-signals";
+import { Signal, type SignalConnection } from "typed-signals";
 import type { ConnectOptions } from "typed-signals/dist/Signal";
 
 let postpone = (function () {
@@ -38,55 +38,92 @@ let postpone = (function () {
 // 	}
 // 	return Browser.Other;
 // }
-export interface TimerInfo {}
+export interface TimerInfo {
+	deltaTime: number;
+	deltaMS: number;
+}
 export default class TickerSystem {
 	private stopped: boolean = true;
 	private last_frame_moment_ms: DOMHighResTimeStamp;
-	private loop_closure;
-	private signal = new Signal();
+	private signal: Signal<(timer: TimerInfo) => void> = new Signal();
+	private interval: number | undefined;
 	// static BROWSER = sniff_browser();
 	public constructor(
 		private app: Application,
 		public vsync = true,
+		public use_postpone = false,
 	) {
 		log("vsync:", vsync);
 		this.last_frame_moment_ms = performance.now();
-		this.loop_closure = this.loop.bind(this);
 	}
-	loop() {
+	async loop() {
 		// log("Looping");
 		if (this.stopped) {
+			clearInterval(this.interval);
 			return;
 		}
-		if (!this.vsync) {
-			if (performance.now() <= this.last_frame_moment_ms + MIN_MS_PER_FRAME) {
-				// log("Postponing to next ms");
-				postpone(this.loop_closure);
-				return;
-			}
+		let now = performance.now();
+		if (now <= this.last_frame_moment_ms + MIN_MS_PER_FRAME) {
+			// log("Postponing to next ms");
+			await this.yield_to_browser();
+			return;
 		}
 
+		let deltaMS = now - this.last_frame_moment_ms;
+		if (deltaMS == 0) {
+			log("Something has gone evilly wrong.");
+			log(
+				"now >= this.last_frame_moment_ms + MIN_MS_PER_FRAME",
+				now,
+				">=",
+				this.last_frame_moment_ms + MIN_MS_PER_FRAME,
+			);
+			log(
+				"now = ",
+				now,
+				"this.last_frame_moment_ms = ",
+				this.last_frame_moment_ms,
+			);
+			log("deltaMS = ", deltaMS);
+		}
+
+		let deltaTime = deltaMS / 1000;
 		gsap.ticker.tick();
-		this.signal.emit({});
+		this.signal.emit({ deltaMS, deltaTime });
 		this.app.render();
 		// log(performance.now() - this.last_frame_moment_ms);
 		this.last_frame_moment_ms = performance.now();
-		if (!this.stopped) {
-			if (this.vsync) {
-				requestAnimationFrame(this.loop_closure);
-			} else {
-				postpone(this.loop_closure);
-			}
+		await this.yield_to_browser();
+	}
+	yield_to_browser(): Promise<void> {
+		if (this.vsync) {
+			let prom: Promise<void> = new Promise((res) =>
+				requestAnimationFrame(() => {
+					// log("RequestAnimationFrame called");
+					res();
+				}),
+			);
+			// log("Yielding with vsync callback: ", prom);
+			return prom;
+		} else if (this.use_postpone) {
+			return new Promise((res) => postpone(res));
+		} else {
+			let prom: Promise<void> = new Promise((res) => setTimeout(res));
+			// log("Yielding with non-vsync callback: ", prom);
+			return prom;
 		}
 	}
 	start() {
 		this.stopped = false;
-		this.loop();
+		this.interval = setInterval(this.loop.bind(this), 0) as unknown as number;
 	}
 	stop() {
 		this.stopped = true;
 	}
-	add(func: (timer: TimerInfo) => void, options?: ConnectOptions) {
+	add(
+		func: (timer: TimerInfo) => void,
+		options?: ConnectOptions,
+	): SignalConnection {
 		return this.signal.connect(func, options);
 	}
 	remove(func: (timer: TimerInfo) => void) {

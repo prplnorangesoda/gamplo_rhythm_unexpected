@@ -41,7 +41,7 @@ export default class GameManager {
 		screen_kind: ScreenKind,
 		data?: (typeof SCREEN_MAP)[T],
 	) {
-		log("Setting screen", screen_kind);
+		log("Setting screen", SCREEN_MAP[screen_kind].name);
 		if (this.current_screen) {
 			log("Current screen:", SCREEN_MAP[screen_kind].name);
 			await this.current_screen.onHide();

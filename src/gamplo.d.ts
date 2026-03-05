@@ -9,7 +9,7 @@ declare namespace Gamplo {
 	}
 }
 
-declare const Gamplo: {
+interface Gamplo {
 	apiBase: string;
 	sessionId: any;
 	player: any;
@@ -47,4 +47,4 @@ declare const Gamplo: {
 	setSave(e: any, t?: number): Promise<any>;
 	deleteSave(e?: number): Promise<any>;
 	listSaves(): Promise<any>;
-};
+}

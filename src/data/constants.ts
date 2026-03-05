@@ -13,5 +13,6 @@ export const MAX_HEALTH = 100;
 export const MIN_HEALTH = 0;
 export const SCROLL_SPEED = 1;
 
-export const FPS_LIMIT = 1000;
+// Variables for rendering when we're running without VSync.
+export const FPS_LIMIT = 1200;
 export const MIN_MS_PER_FRAME = FPS_LIMIT / 1000;

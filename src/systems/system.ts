@@ -1,7 +1,7 @@
 import KeySystem from "./keys";
 import { NavSystem } from "./nav";
 import TickerSystem from "./ticker";
-import { is_dev } from "../env";
+// import { is_dev } from "../env";
 import type { Application } from "pixi.js";
 
 export type Systems = {
@@ -14,6 +14,6 @@ export function createSystems(app: Application): Systems {
 	return {
 		nav: new NavSystem(),
 		keys: new KeySystem(),
-		ticker: new TickerSystem(app, !is_dev),
+		ticker: new TickerSystem(app, true),
 	};
 }

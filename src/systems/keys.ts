@@ -27,11 +27,13 @@ export default class KeySystem {
 		Escape: Keybind.Escape,
 	};
 
-	public readonly bindDown: Signal<(bind: Keybind) => void>;
+	public readonly bindDown: Signal<(bind: Keybind, time: number) => void>;
+	public readonly bindUp: Signal<(bind: Keybind, time: number) => void>;
 
 	constructor() {
 		this.keys = new Map();
 		this.bindDown = new Signal();
+		this.bindUp = new Signal();
 		// window.addEventListener("click", this.onclickl);
 		window.addEventListener("keydown", this.onkeydownl);
 		window.addEventListener("keyup", this.onkeyupl);
@@ -51,13 +53,19 @@ export default class KeySystem {
 		if (bind !== undefined) {
 			event.preventDefault();
 			// log("Event code in KeySystem.binds");
-			this.bindDown.emit(bind);
+			let time = performance.now();
+			this.bindDown.emit(bind, time);
 		}
 		console.log("keyDown", event.code);
 	}
 	private onKeyUp(event: KeyboardEvent) {
 		event.preventDefault();
 		this.keys.set(event.code, false);
+		let bind = KeySystem.binds[event.code];
+		if (bind !== undefined) {
+			let time = performance.now();
+			this.bindUp.emit(bind, time);
+		}
 		// console.log("keyUp", event);
 	}
 }

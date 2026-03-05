@@ -9,6 +9,7 @@ import type { ScreenSwitchEvent } from "./systems/nav";
 import { sound } from "@pixi/sound";
 import { sleep } from "./sleep";
 import { sys } from "typescript";
+import gsap from "gsap";
 
 // console.log("Hello via Bun!");
 setup_sync();
@@ -23,8 +24,13 @@ async function main() {
 	const app = new Application();
 	const systems = createSystems(app);
 
-	Object.defineProperty(window, "systems", { value: systems });
+	Object.defineProperty(window, "systems", {
+		value: systems,
+		configurable: true,
+	});
 	const pin = document.getElementById("pin")!;
+
+	gsap.ticker.fps(1);
 	await app.init({
 		background: Colors.BG,
 		resizeTo: pin,
@@ -41,6 +47,25 @@ async function main() {
 	});
 	app.stage.addChild(fps_text);
 	fps = fps_text;
+	let time = performance.now();
+	let elapsed_ms_collector: number[] = [];
+	systems.ticker.add(function (timer) {
+		elapsed_ms_collector.push(1000 / timer.deltaMS);
+		// log(timer.deltaMS);
+		// log(elapsed_ms_collector);
+		if (performance.now() - time > 1000) {
+			time = performance.now();
+			let total_num = elapsed_ms_collector.reduce(
+				(prev, current, _idx, _arr) => {
+					return prev + current;
+				},
+			);
+			let length = elapsed_ms_collector.length;
+			let avg_fps = total_num / length;
+			fps_text.text = avg_fps.toFixed(1) + " FPS";
+			elapsed_ms_collector = [];
+		}
+	});
 	game.init();
 	sound.disableAutoPause = true;
 	window.addEventListener(
