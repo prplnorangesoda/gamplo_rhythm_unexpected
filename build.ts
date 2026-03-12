@@ -11,7 +11,7 @@ await Bun.build({
 	minify: true,
 	footer: "(c) Lucy Faria 2026. Built on " + new Date().toISOString(),
 	define: {
-		["process.env.NODE_ENV"]: '"production"',
-		["process.env.GAMPLO_ENABLED"]: "true",
+		["build.NODE_ENV"]: '"production"',
+		["build.GAMPLO_ENABLED"]: "true",
 	},
 });

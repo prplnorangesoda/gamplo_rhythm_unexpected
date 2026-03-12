@@ -50,50 +50,48 @@ export default class TickerSystem {
 	// static BROWSER = sniff_browser();
 	public constructor(
 		private app: Application,
-		public vsync = true,
-		public use_postpone = false,
+		public vsync = false,
+		public use_scheduler = true,
 	) {
 		log("vsync:", vsync);
 		this.last_frame_moment_ms = performance.now();
 	}
 	async loop() {
 		// log("Looping");
-		if (this.stopped) {
-			clearInterval(this.interval);
-			return;
-		}
-		let now = performance.now();
-		if (now <= this.last_frame_moment_ms + MIN_MS_PER_FRAME) {
-			// log("Postponing to next ms");
+		while (!this.stopped) {
+			let now = performance.now();
+			if (now <= this.last_frame_moment_ms + MIN_MS_PER_FRAME) {
+				log("Postponing to next ms");
+				await this.yield_to_browser();
+				return;
+			}
+
+			let deltaMS = now - this.last_frame_moment_ms;
+			if (deltaMS == 0) {
+				log("Something has gone evilly wrong.");
+				log(
+					"now >= this.last_frame_moment_ms + MIN_MS_PER_FRAME",
+					now,
+					">=",
+					this.last_frame_moment_ms + MIN_MS_PER_FRAME,
+				);
+				log(
+					"now = ",
+					now,
+					"this.last_frame_moment_ms = ",
+					this.last_frame_moment_ms,
+				);
+				log("deltaMS = ", deltaMS);
+			}
+
+			let deltaTime = deltaMS / 1000;
+			gsap.ticker.tick();
+			this.signal.emit({ deltaMS, deltaTime });
+			this.app.render();
+			// log(performance.now() - this.last_frame_moment_ms);
+			this.last_frame_moment_ms = now;
 			await this.yield_to_browser();
-			return;
 		}
-
-		let deltaMS = now - this.last_frame_moment_ms;
-		if (deltaMS == 0) {
-			log("Something has gone evilly wrong.");
-			log(
-				"now >= this.last_frame_moment_ms + MIN_MS_PER_FRAME",
-				now,
-				">=",
-				this.last_frame_moment_ms + MIN_MS_PER_FRAME,
-			);
-			log(
-				"now = ",
-				now,
-				"this.last_frame_moment_ms = ",
-				this.last_frame_moment_ms,
-			);
-			log("deltaMS = ", deltaMS);
-		}
-
-		let deltaTime = deltaMS / 1000;
-		gsap.ticker.tick();
-		this.signal.emit({ deltaMS, deltaTime });
-		this.app.render();
-		// log(performance.now() - this.last_frame_moment_ms);
-		this.last_frame_moment_ms = performance.now();
-		await this.yield_to_browser();
 	}
 	yield_to_browser(): Promise<void> {
 		if (this.vsync) {
@@ -105,7 +103,13 @@ export default class TickerSystem {
 			);
 			// log("Yielding with vsync callback: ", prom);
 			return prom;
-		} else if (this.use_postpone) {
+		} else if (this.use_scheduler) {
+			//@ts-ignore
+			if (window.scheduler) {
+				// log("Scheduler found");
+				//@ts-ignore
+				return window.scheduler.yield();
+			}
 			return new Promise((res) => postpone(res));
 		} else {
 			let prom: Promise<void> = new Promise((res) => setTimeout(res));
@@ -115,7 +119,7 @@ export default class TickerSystem {
 	}
 	start() {
 		this.stopped = false;
-		this.interval = setInterval(this.loop.bind(this), 0) as unknown as number;
+		requestAnimationFrame(this.loop.bind(this)) as unknown as number;
 	}
 	stop() {
 		this.stopped = true;

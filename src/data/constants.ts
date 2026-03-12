@@ -1,3 +1,5 @@
+import log from "../log";
+
 export const LANE_SIZE = 70;
 export const LANE_PADDING = 3;
 
@@ -16,3 +18,14 @@ export const SCROLL_SPEED = 1;
 // Variables for rendering when we're running without VSync.
 export const FPS_LIMIT = 1200;
 export const MIN_MS_PER_FRAME = FPS_LIMIT / 1000;
+
+// if anything is missing, it references this variable
+//@ts-expect-error
+window.build = {};
+
+export const IS_PROD = build.NODE_ENV == "production";
+export const IS_DEV = !IS_PROD;
+
+export const GAMPLO_ENABLED = !!build.GAMPLO_ENABLED;
+
+log("\nIS_PROD: ", IS_PROD, "\nGAMPLO_ENABLED: ", GAMPLO_ENABLED);

@@ -1,5 +1,7 @@
+import { GAMPLO_ENABLED } from "./data/constants";
+
 export async function setup_sync() {
-	if (!process.env.GAMPLO_ENABLED) {
+	if (!GAMPLO_ENABLED) {
 		return;
 	}
 

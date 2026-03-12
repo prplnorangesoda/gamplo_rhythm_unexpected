@@ -162,6 +162,9 @@ export class Strumline extends Container {
 		await gsap.to(this.hintContainer, { alpha: 0, duration: 0.5 });
 		this.removeChild(this.hintContainer);
 	}
+	async onHide() {
+		log("TODO: make the thing actually stop playing when hidden");
+	}
 	updateNotes() {
 		let beats_from_start: number;
 		if (this.state == StrumlineState.PreNotes) {

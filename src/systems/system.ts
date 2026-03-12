@@ -14,6 +14,6 @@ export function createSystems(app: Application): Systems {
 	return {
 		nav: new NavSystem(),
 		keys: new KeySystem(),
-		ticker: new TickerSystem(app, true),
+		ticker: new TickerSystem(app),
 	};
 }

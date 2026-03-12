@@ -9,7 +9,7 @@ export interface AppScreen<Data = any> extends Container {
 }
 
 export interface ScreenConstructor {
-	readonly NAME: string;
+	readonly SCREEN_NAME: string;
 	readonly LAYER: string;
 	new (): AppScreen;
 }

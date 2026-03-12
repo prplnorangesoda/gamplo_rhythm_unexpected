@@ -9,6 +9,7 @@ import { Strumline } from "../components/Strumline";
 import { Sound } from "@pixi/sound";
 import { get_chart_from_url } from "../chart";
 import type { TimerInfo } from "../systems/ticker";
+import { Keybind } from "../systems/keys";
 
 export interface InSongScreenData {
 	song: SongData;
@@ -17,7 +18,7 @@ export class InSongScreen
 	extends Container
 	implements AppScreen<InSongScreenData>
 {
-	public static NAME = "insong";
+	public static SCREEN_NAME = "insong";
 	public static LAYER = "main";
 
 	private size = {
@@ -34,14 +35,17 @@ export class InSongScreen
 
 	private strumline: Strumline;
 	private playing: boolean;
+	private showing: boolean;
 
 	// private sound?: Sound;
 	constructor(private systems: Systems) {
 		super();
 
 		this.playing = false;
+		this.showing = false;
 		this.loadingSongContainer = new Container();
 
+		systems.keys.bindUp.connect(this.onBindUpClosure);
 		this.loading_text = new Text({
 			text: "LOADING",
 			style: {
@@ -90,8 +94,24 @@ export class InSongScreen
 		this.song_title_text.anchor = { x: 0, y: 1 };
 		this.inSongContainer.addChild(this.song_author_text);
 	}
+	onBindUpClosure = this.onBindUp.bind(this);
+	onBindUp(bind: Keybind, time: DOMHighResTimeStamp) {
+		if (!this.showing) {
+			return;
+		}
+		if (bind == Keybind.Escape) {
+			this.systems.nav.requestScreenSwitch(ScreenKind.MainMenu);
+		}
+	}
+	onBindDownClosure = this.onBindDown.bind(this);
+	onBindDown(bind: Keybind, time: DOMHighResTimeStamp) {
+		if (!this.showing) {
+			return;
+		}
+	}
 
 	async onShow(data: InSongScreenData) {
+		this.showing = true;
 		this.addChild(this.loadingSongContainer);
 		log("showing with data:", data);
 		this.song_title_text.text = data.song.name;
@@ -140,7 +160,6 @@ export class InSongScreen
 		});
 		this.systems.nav.requestScreenSwitch(ScreenKind.MainMenu);
 	}
-
 	onUpdate(time: TimerInfo) {
 		// log("this.playing", this.playing);
 		if (this.playing) {
@@ -168,6 +187,8 @@ export class InSongScreen
 	}
 
 	async onHide() {
+		this.showing = false;
+		await this.strumline.onHide();
 		this.removeChild(this.inSongContainer);
 		this.playing = false;
 	}
